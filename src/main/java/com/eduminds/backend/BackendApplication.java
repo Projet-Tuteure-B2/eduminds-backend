@@ -12,9 +12,8 @@ public class BackendApplication {
         ConfigurableApplicationContext ctx = SpringApplication.run(BackendApplication.class, args);
         Environment env = ctx.getEnvironment();
 
-        String port    = env.getProperty("server.port", "8082");
-        String db      = env.getProperty("spring.datasource.url", "—");
-        String claude  = env.getProperty("claude.api.key", "");
+        String port   = env.getProperty("server.port", "8082");
+        String claude = env.getProperty("claude.api.key", "");
 
         System.out.println("""
                 

@@ -1,7 +1,6 @@
 package com.eduminds.backend.config;
 
 import com.eduminds.backend.security.JwtAuthFilter;
-import com.eduminds.backend.security.UserPrincipalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
 import org.springframework.security.authentication.*;
@@ -24,7 +23,6 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthFilter jwtAuthFilter;
-    private final UserPrincipalService userPrincipalService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
