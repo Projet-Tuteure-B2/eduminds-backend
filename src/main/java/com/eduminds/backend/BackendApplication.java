@@ -2,15 +2,32 @@ package com.eduminds.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 
 @SpringBootApplication
 public class BackendApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(BackendApplication.class, args);
-        System.out.println("========================================");
-        System.out.println("  🧠 Eduminds Backend a démarré !       ");
-        System.out.println("  📍 http://localhost:8081              ");
-        System.out.println("========================================");
+        ConfigurableApplicationContext ctx = SpringApplication.run(BackendApplication.class, args);
+        Environment env = ctx.getEnvironment();
+
+        String port    = env.getProperty("server.port", "8082");
+        String db      = env.getProperty("spring.datasource.url", "—");
+        String claude  = env.getProperty("claude.api.key", "");
+
+        System.out.println("""
+                
+                ╔══════════════════════════════════════════╗
+                ║          🧠  SYNAPZ · Backend            ║
+                ╠══════════════════════════════════════════╣
+                ║  URL  : http://localhost:%s            ║
+                ║  DB   : synapz_db (MariaDB)              ║
+                ║  IA   : %s                     ║
+                ╚══════════════════════════════════════════╝
+                """.formatted(
+                port,
+                claude.isBlank() ? "❌ Clé Claude absente (mode dev)" : "✅ Claude API connectée"
+        ));
     }
 }
