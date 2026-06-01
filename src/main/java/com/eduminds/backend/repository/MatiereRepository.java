@@ -1,0 +1,10 @@
+package com.eduminds.backend.repository;
+import com.eduminds.backend.entity.Matiere;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import java.util.List;
+@Repository
+public interface MatiereRepository extends JpaRepository<Matiere, Long> {
+    List<Matiere> findByUserId(Long userId);
+    List<Matiere> findByUserIdAndFiliereId(Long userId, Long filiereId);
+}

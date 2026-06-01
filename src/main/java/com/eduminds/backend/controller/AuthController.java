@@ -1,91 +1,51 @@
 package com.eduminds.backend.controller;
 
-import com.eduminds.backend.dto.AuthRequest;
-import com.eduminds.backend.dto.AuthResponse;
-import com.eduminds.backend.dto.RegisterRequest;
-import com.eduminds.backend.entity.User;
-import com.eduminds.backend.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import com.eduminds.backend.dto.*;
+import com.eduminds.backend.service.AuthService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import java.util.HashMap;
+
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = "*")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final AuthService authService;
 
+    /**
+     * POST /api/auth/register
+     * Crée un compte. Retourne un JWT + diagnosticPassed=false.
+     * Le frontend doit rediriger vers l'écran de diagnostic.
+     */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
-        try {
-            // Vérifier si l'email existe déjà
-            if (userRepository.existsByEmail(request.getEmail())) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Cet email est déjà utilisé");
-                return ResponseEntity.badRequest().body(error);
-            }
-
-            // Créer l'utilisateur
-            User user = new User();
-            user.setName(request.getName());
-            user.setEmail(request.getEmail());
-            user.setPassword(request.getPassword()); // À hasher plus tard
-            user.setFiliere(request.getFiliere());
-            user.setLevel(request.getLevel());
-            user.setXpTotal(0);
-            user.setStreak(0);
-
-            userRepository.save(user);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Utilisateur créé avec succès");
-            response.put("email", user.getEmail());
-            response.put("name", user.getName());
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Erreur lors de l'inscription: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        return ResponseEntity.ok(authService.register(request));
     }
 
+    /**
+     * POST /api/auth/login
+     * Authentifie un utilisateur. Retourne un JWT + toutes les infos du profil.
+     */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
-        try {
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElse(null);
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
+        return ResponseEntity.ok(authService.login(request));
+    }
 
-            if (user == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Email ou mot de passe incorrect");
-                return ResponseEntity.badRequest().body(error);
-            }
-
-            if (!user.getPassword().equals(request.getPassword())) {
-                Map<String, String> error = new HashMap<>();
-                error.put("error", "Email ou mot de passe incorrect");
-                return ResponseEntity.badRequest().body(error);
-            }
-
-            // Pour l'instant, on retourne les infos sans JWT
-            Map<String, String> response = new HashMap<>();
-            response.put("token", "fake-jwt-token-" + System.currentTimeMillis());
-            response.put("email", user.getEmail());
-            response.put("name", user.getName());
-            response.put("filiere", user.getFiliere());
-            response.put("level", user.getLevel());
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("error", "Erreur lors de la connexion: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
-        }
+    /**
+     * POST /api/auth/logout
+     * Invalide tous les tokens actifs de l'utilisateur connecté.
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Map<String, String>> logout(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        authService.logout(userDetails.getUsername());
+        return ResponseEntity.ok(Map.of("message", "Déconnexion réussie"));
     }
 }
